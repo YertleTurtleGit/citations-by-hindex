@@ -25,6 +25,9 @@ const camera = new THREE.OrthographicCamera();
 const renderer = new THREE.WebGLRenderer({ canvas: canvas });
 renderer.setClearColor(new THREE.Color("white"));
 
+const controls = new THREE.OrbitControls(camera, canvas);
+//cameraControls.enableRotate = false;
+
 const vertexShaderSource = `#version 300 es
 in vec3 position;
 in vec2 uv;
@@ -129,15 +132,24 @@ const material = new THREE.RawShaderMaterial({
 
 const mesh = new THREE.Mesh(instancedGeometry, material);
 
+const scene = new THREE.Scene();
+scene.add(mesh);
+scene.add(camera);
+
+function render() {
+  console.log("render");
+  renderer.render(scene, camera);
+}
+
 function adaptToWindowSize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   renderer.setSize(canvas.width, canvas.height);
-
-  renderer.render(mesh, camera);
+  requestAnimationFrame(render);
 }
 adaptToWindowSize();
 window.addEventListener("resize", adaptToWindowSize);
+controls.addEventListener("change", render);
 
 const controlPanel = document.getElementById("control-panel");
 
@@ -156,9 +168,7 @@ Object.keys(material.uniforms).forEach((uniformKey) => {
 
   inputElement.addEventListener("input", (event) => {
     material.uniforms[uniformKey].value = event.target.value;
-    setTimeout(() => {
-      renderer.render(mesh, camera);
-    });
+    requestAnimationFrame(render);
   });
 
   controlPanel.append(inputElement);
