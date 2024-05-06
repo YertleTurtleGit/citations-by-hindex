@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Science Hierarchy</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+
+      #plot {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
+
+      #plot-progress {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      #control-panel {
+        display: flex;
+        position: absolute;
+        right: 0;
+        gap: 0.5rem;
+        flex-direction: column;
+        padding: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="plot"></canvas>
+    <div id="control-panel"></div>
+
+    <script src="three.js"></script>
+    <script src="hindices.js"></script>
+    <script src="plot-three.js"></script>
+  </body>
+</html>
