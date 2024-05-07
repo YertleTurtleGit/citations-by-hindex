@@ -31,12 +31,13 @@ const controls = new THREE.OrbitControls(camera, canvas);
 const vertexShaderSource = `#version 300 es
 in vec3 position;
 in vec2 uv;
-in float selfHindex;
-in float citedByHindex;
+in int selfHindex;
+in int citedByHindex;
 
+flat out int vSelfHindex;
+flat out int vCitedByHindex;
 out vec2 vUv;
-out float vSelfHindex;
-out float vCitedByHindex;
+
 
 void main() {
   gl_Position = vec4(position * 2.0, 1.0);
@@ -50,8 +51,8 @@ const fragmentShaderSource = `#version 300 es
 precision highp float;
 
 in vec2 vUv;
-in float vSelfHindex;
-in float vCitedByHindex;
+flat in int vSelfHindex;
+flat in int vCitedByHindex;
 
 out vec4 fragmentColor;
 
@@ -61,8 +62,8 @@ uniform float lineThickness;
 uniform float lineAlpha;
 uniform float lineSmoothness;
 
-float hindexToScreenSpace(float hindex) {
-  return (hindex - float(lowestHindex)) / float(highestHindex - lowestHindex);
+float hindexToClipSpace(int hindex) {
+  return float(hindex - lowestHindex) / float(highestHindex - lowestHindex);
 }
 
 void main() {
@@ -77,14 +78,14 @@ void main() {
     color = vec3(1.0, 0.0, 0.0);
   }
 
-  float selfHindexScreenSpace = hindexToScreenSpace(vSelfHindex);
-  float citedByHindexScreenSpace = hindexToScreenSpace(vCitedByHindex);
+  float selfHindexClipSpace = hindexToClipSpace(vSelfHindex);
+  float citedByHindexClipSpace = hindexToClipSpace(vCitedByHindex);
 
   vec2 arcCenter = vec2(
-    (selfHindexScreenSpace + citedByHindexScreenSpace) / 2.0, 0.5
+    (selfHindexClipSpace + citedByHindexClipSpace) / 2.0, 0.5
   );
 
-  float arcRadius = abs(selfHindexScreenSpace - citedByHindexScreenSpace) / 2.0;
+  float arcRadius = abs(selfHindexClipSpace - citedByHindexClipSpace) / 2.0;
   float arcDistance = distance(arcCenter, vUv);
   
   float arcAlpha = (1.0 - smoothstep(
@@ -109,11 +110,11 @@ instancedGeometry.instanceCount = selfHindexList.length;
 
 instancedGeometry.setAttribute(
   "selfHindex",
-  new THREE.InstancedBufferAttribute(new Float32Array(selfHindexList), 1)
+  new THREE.InstancedBufferAttribute(new Int32Array(selfHindexList), 1)
 );
 instancedGeometry.setAttribute(
   "citedByHindex",
-  new THREE.InstancedBufferAttribute(new Float32Array(citedByHindexList), 1)
+  new THREE.InstancedBufferAttribute(new Int32Array(citedByHindexList), 1)
 );
 
 const material = new THREE.RawShaderMaterial({
