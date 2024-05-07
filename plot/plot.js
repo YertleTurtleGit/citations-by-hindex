@@ -3,7 +3,10 @@
 const canvas = /** @type {HTMLCanvasElement} */ (
   document.getElementById("plot")
 );
-const progress = document.getElementById("plot-progress");
+const progress = /** @type {HTMLProgressElement} */ (
+  document.getElementById("plot-progress")
+);
+const axis = /** @type {HTMLDivElement} */ (document.getElementById("axis"));
 
 const allHindices = hindices.flatMap((obj) => [...obj.self, ...obj.citedBy]);
 const highestHindex = Math.max(...allHindices);
@@ -26,7 +29,7 @@ const renderer = new THREE.WebGLRenderer({ canvas: canvas });
 renderer.setClearColor(new THREE.Color("white"));
 
 const controls = new THREE.OrbitControls(camera, canvas);
-//cameraControls.enableRotate = false;
+controls.enableRotate = false;
 
 const vertexShaderSource = `#version 300 es
 in vec3 position;
@@ -37,7 +40,6 @@ in int citedByHindex;
 flat out int vSelfHindex;
 flat out int vCitedByHindex;
 out vec2 vUv;
-
 
 void main() {
   gl_Position = vec4(position * 2.0, 1.0);
@@ -61,20 +63,30 @@ uniform int lowestHindex;
 uniform float lineThickness;
 uniform float lineAlpha;
 uniform float lineSmoothness;
+uniform float axisFontScale;
+uniform int axisDistance;
 
 float hindexToClipSpace(int hindex) {
   return float(hindex - lowestHindex) / float(highestHindex - lowestHindex);
 }
 
 void main() {
+  if(mod(gl_FragCoord.x, float(axisDistance)) < 1.0) {
+    fragmentColor = vec4(vec3(0.5), 1.0);
+    return;
+  }
+
   if (vSelfHindex == vCitedByHindex) discard;
 
   vec3 color;
+  float centerShift;
   if(vSelfHindex < vCitedByHindex) {
-    if (vUv.y < 0.5) discard;
+    centerShift = axisFontScale / 200.0;
+    if (vUv.y < 0.5 + centerShift) discard;
     color = vec3(0.0, 0.0, 1.0);
   } else {
-    if (vUv.y > 0.5) discard;
+    centerShift = -axisFontScale / 200.0;
+    if (vUv.y > 0.5 + centerShift) discard;
     color = vec3(1.0, 0.0, 0.0);
   }
 
@@ -82,7 +94,8 @@ void main() {
   float citedByHindexClipSpace = hindexToClipSpace(vCitedByHindex);
 
   vec2 arcCenter = vec2(
-    (selfHindexClipSpace + citedByHindexClipSpace) / 2.0, 0.5
+    (selfHindexClipSpace + citedByHindexClipSpace) / 2.0,
+    0.5 + centerShift
   );
 
   float arcRadius = abs(selfHindexClipSpace - citedByHindexClipSpace) / 2.0;
@@ -98,13 +111,12 @@ void main() {
     arcDistance + lineThickness / 2.0
   );
 
-
   fragmentColor = vec4(color, arcAlpha * lineAlpha);
 }
 `;
 
 const instancedGeometry = new THREE.InstancedBufferGeometry().copy(
-  new THREE.PlaneBufferGeometry()
+  new THREE.PlaneGeometry()
 );
 instancedGeometry.instanceCount = selfHindexList.length;
 
@@ -117,10 +129,14 @@ instancedGeometry.setAttribute(
   new THREE.InstancedBufferAttribute(new Int32Array(citedByHindexList), 1)
 );
 
+let axisDistance = 250;
+let axisFontScale = 2;
 const material = new THREE.RawShaderMaterial({
   uniforms: {
-    lowestHindex: { type: "i", value: lowestHindex },
-    highestHindex: { type: "i", value: highestHindex },
+    lowestHindex: { type: "i", value: lowestHindex, controls: false },
+    highestHindex: { type: "i", value: highestHindex, controls: false },
+    axisFontScale: { type: "f", value: axisFontScale },
+    axisDistance: { type: "i", value: axisDistance },
     lineThickness: { type: "f", value: 0.001 },
     lineAlpha: { type: "f", value: 0.1 },
     lineSmoothness: { type: "f", value: 0.001 },
@@ -137,6 +153,22 @@ const scene = new THREE.Scene();
 scene.add(mesh);
 scene.add(camera);
 
+function adaptAxisLabels() {
+  axis.innerHTML = "";
+
+  const labelCount = Math.ceil(canvas.width / axisDistance);
+  for (let labelIndex = 0; labelIndex < labelCount; labelIndex++) {
+    const labelSpan = document.createElement("span");
+    const labelPosition = labelIndex * axisDistance;
+    labelSpan.innerText = Math.round(
+      (labelPosition / canvas.width) * highestHindex
+    );
+    labelSpan.style.left = "" + labelPosition + "px";
+    labelSpan.style.fontSize = axisFontScale + "vh";
+    axis.appendChild(labelSpan);
+  }
+}
+
 function render() {
   console.log("render");
   renderer.render(scene, camera);
@@ -146,6 +178,7 @@ function adaptToWindowSize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   renderer.setSize(canvas.width, canvas.height);
+  adaptAxisLabels();
   requestAnimationFrame(render);
 }
 adaptToWindowSize();
@@ -155,8 +188,7 @@ controls.addEventListener("change", render);
 const controlPanel = document.getElementById("control-panel");
 
 Object.keys(material.uniforms).forEach((uniformKey) => {
-  if (material.uniforms[uniformKey].type != "f") return;
-
+  if (material.uniforms[uniformKey].controls == false) return;
   const value = material.uniforms[uniformKey].value;
 
   const inputElement = document.createElement("input");
@@ -167,15 +199,30 @@ Object.keys(material.uniforms).forEach((uniformKey) => {
   inputElement.step = value * 0.05;
   inputElement.value = value;
 
-  inputElement.addEventListener("input", (event) => {
-    material.uniforms[uniformKey].value = event.target.value;
-    requestAnimationFrame(render);
-  });
-
-  controlPanel.append(inputElement);
-
   const inputLabel = document.createElement("label");
   inputLabel.for = uniformKey;
-  inputLabel.innerText = uniformKey;
+  inputLabel.innerText = uniformKey + ": " + value;
   controlPanel.append(inputLabel);
+  controlPanel.append(inputElement);
+
+  inputElement.addEventListener("input", (event) => {
+    let newValue = event.target.value;
+
+    if (material.uniforms[uniformKey].type == "i") {
+      newValue = Math.round(newValue);
+    }
+    event.target.value = newValue;
+    material.uniforms[uniformKey].value = newValue;
+    inputLabel.innerText = uniformKey + ": " + newValue;
+    requestAnimationFrame(render);
+
+    if (uniformKey == "axisDistance") {
+      axisDistance = newValue;
+      adaptAxisLabels();
+    }
+    if (uniformKey == "axisFontScale") {
+      axisFontScale = newValue;
+      adaptAxisLabels();
+    }
+  });
 });

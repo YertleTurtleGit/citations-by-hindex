@@ -9,6 +9,7 @@
         margin: 0;
         padding: 0;
         border: 0;
+        font-family: sans-serif;
       }
 
       #plot {
@@ -27,16 +28,36 @@
       #control-panel {
         display: flex;
         position: absolute;
-        right: 0;
+        left: 0;
         gap: 0.5rem;
         flex-direction: column;
         padding: 0.5rem;
+        width: 90%;
+      }
+
+      #control-panel {
+        width: 15rem;
+      }
+
+      #axis {
+        width: 100%;
+        font-size: 1rem;
+        position: absolute;
+        top: 50%;
+        left: 0;
+      }
+
+      #axis span {
+        position: absolute;
+        transform: translate(0.3rem, -50%);
+        color: rgb(128, 128, 128);
       }
     </style>
   </head>
   <body>
     <canvas id="plot"></canvas>
     <div id="control-panel"></div>
+    <div id="axis"></div>
 
     <script src="./plot/three.js"></script>
     <script src="./plot/three-orbit-controls.js"></script>
