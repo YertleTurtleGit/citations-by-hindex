@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Semicircles</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font-family: sans-serif;
+      }
+
+      #plot {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+      }
+
+      #plot-progress {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      #control-panel {
+        display: flex;
+        position: absolute;
+        left: 0;
+        gap: 0.5rem;
+        flex-direction: column;
+        padding: 0.5rem;
+        width: 90%;
+      }
+
+      #control-panel {
+        width: 15rem;
+      }
+
+      #axis {
+        width: 100%;
+        font-size: 1rem;
+        position: absolute;
+        top: 50%;
+        left: 0;
+      }
+
+      #axis span {
+        position: absolute;
+        transform: translate(0.3rem, -50%);
+        color: RGB(128, 128, 128);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="plot"></canvas>
+    <div id="control-panel"></div>
+    <div id="axis"></div>
+
+    <script src="lib/three.js"></script>
+    <script src="lib/three-orbit-controls.js"></script>
+    <script src="hindices.js"></script>
+    <script src="semicircles.js"></script>
+  </body>
+</html>

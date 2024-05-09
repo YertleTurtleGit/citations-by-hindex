@@ -11,57 +11,13 @@
         border: 0;
         font-family: sans-serif;
       }
-
-      #plot {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-      }
-
-      #plot-progress {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-      }
-
-      #control-panel {
-        display: flex;
-        position: absolute;
-        left: 0;
-        gap: 0.5rem;
-        flex-direction: column;
-        padding: 0.5rem;
-        width: 90%;
-      }
-
-      #control-panel {
-        width: 15rem;
-      }
-
-      #axis {
-        width: 100%;
-        font-size: 1rem;
-        position: absolute;
-        top: 50%;
-        left: 0;
-      }
-
-      #axis span {
-        position: absolute;
-        transform: translate(0.3rem, -50%);
-        color: rgb(128, 128, 128);
-      }
     </style>
   </head>
   <body>
-    <canvas id="plot"></canvas>
-    <div id="control-panel"></div>
-    <div id="axis"></div>
-
-    <script src="./plot/three.js"></script>
-    <script src="./plot/three-orbit-controls.js"></script>
-    <script src="./plot/hindices.js"></script>
-    <script src="./plot/plot.js"></script>
+    <h1>Cites by h-index</h1>
+    <ul>
+      <li><a href="plots/semicircles.html">Semicircles</a></li>
+      <li><a href="plots/histogram.html">Histogram</a></li>
+    </ul>
   </body>
 </html>
