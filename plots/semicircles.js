@@ -33,18 +33,14 @@ controls.enableRotate = false;
 
 const vertexShaderSource = `#version 300 es
 in vec3 position;
-in vec2 uv;
 in int selfHindex;
 in int citedByHindex;
 
 flat out int vSelfHindex;
 flat out int vCitedByHindex;
-out vec2 vUv;
 
 void main() {
   gl_Position = vec4(position * 2.0, 1.0);
-
-  vUv = uv;
   vSelfHindex = selfHindex;
   vCitedByHindex = citedByHindex;
 }
@@ -52,7 +48,6 @@ void main() {
 const fragmentShaderSource = `#version 300 es
 precision highp float;
 
-in vec2 vUv;
 flat in int vSelfHindex;
 flat in int vCitedByHindex;
 
@@ -64,29 +59,25 @@ uniform float lineThickness;
 uniform float lineAlpha;
 uniform float lineSmoothness;
 uniform float axisFontScale;
-uniform int axisDistance;
+uniform vec2 viewport;
 
 float hindexToClipSpace(int hindex) {
   return float(hindex - lowestHindex) / float(highestHindex - lowestHindex);
 }
 
 void main() {
-  if(mod(gl_FragCoord.x, float(axisDistance)) < 1.0) {
-    fragmentColor = vec4(vec3(0.5), 1.0);
-    return;
-  }
-
   if (vSelfHindex == vCitedByHindex) discard;
 
+  vec2 uv = gl_FragCoord.xy / viewport;
   vec3 color;
   float centerShift;
   if(vSelfHindex < vCitedByHindex) {
     centerShift = axisFontScale / 200.0;
-    if (vUv.y < 0.5 + centerShift) discard;
+    if (uv.y < 0.5 + centerShift) discard;
     color = vec3(0.0, 0.0, 1.0);
   } else {
     centerShift = -axisFontScale / 200.0;
-    if (vUv.y > 0.5 + centerShift) discard;
+    if (uv.y > 0.5 + centerShift) discard;
     color = vec3(1.0, 0.0, 0.0);
   }
 
@@ -99,7 +90,7 @@ void main() {
   );
 
   float arcRadius = abs(selfHindexClipSpace - citedByHindexClipSpace) / 2.0;
-  float arcDistance = distance(arcCenter, vUv);
+  float arcDistance = distance(arcCenter, uv);
   
   float arcAlpha = (1.0 - smoothstep(
     arcRadius - lineSmoothness,
@@ -133,10 +124,10 @@ let axisDistance = 250;
 let axisFontScale = 2;
 const material = new THREE.RawShaderMaterial({
   uniforms: {
+    viewport: { type: "2f", value: new THREE.Vector2(), controls: false },
     lowestHindex: { type: "i", value: lowestHindex, controls: false },
     highestHindex: { type: "i", value: highestHindex, controls: false },
     axisFontScale: { type: "f", value: axisFontScale },
-    axisDistance: { type: "i", value: axisDistance },
     lineThickness: { type: "f", value: 0.001 },
     lineAlpha: { type: "f", value: 0.1 },
     lineSmoothness: { type: "f", value: 0.001 },
@@ -160,10 +151,11 @@ function adaptAxisLabels() {
   for (let labelIndex = 0; labelIndex < labelCount; labelIndex++) {
     const labelSpan = document.createElement("span");
     const labelPosition = labelIndex * axisDistance;
-    labelSpan.innerText = Math.round(
-      (labelPosition / canvas.width) * highestHindex
-    );
-    labelSpan.style.left = "" + labelPosition + "px";
+    labelSpan.innerHTML =
+      "<p>" +
+      Math.round((labelPosition / canvas.width) * highestHindex) +
+      "</p>";
+    labelSpan.style.left = labelPosition + "px";
     labelSpan.style.fontSize = axisFontScale + "vh";
     axis.appendChild(labelSpan);
   }
@@ -178,6 +170,10 @@ function adaptToWindowSize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   renderer.setSize(canvas.width, canvas.height);
+  material.uniforms.viewport.value = new THREE.Vector2(
+    canvas.width,
+    canvas.height
+  );
   adaptAxisLabels();
   requestAnimationFrame(render);
 }

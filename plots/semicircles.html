@@ -14,8 +14,6 @@
 
       #plot {
         position: absolute;
-        width: 100%;
-        height: 100%;
       }
 
       #plot-progress {
@@ -40,24 +38,26 @@
       }
 
       #axis {
+        height: 100%;
         width: 100%;
         font-size: 1rem;
         position: absolute;
-        top: 50%;
-        left: 0;
       }
 
       #axis span {
         position: absolute;
-        transform: translate(0.3rem, -50%);
+        display: flex;
+        align-items: center;
+        height: 100%;
         color: RGB(128, 128, 128);
+        border-left: 0.1rem RGBA(0, 0, 0, 0.25) solid;
       }
     </style>
   </head>
   <body>
     <canvas id="plot"></canvas>
-    <div id="control-panel"></div>
     <div id="axis"></div>
+    <div id="control-panel"></div>
 
     <script src="lib/three.js"></script>
     <script src="lib/three-orbit-controls.js"></script>
