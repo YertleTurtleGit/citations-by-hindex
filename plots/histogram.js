@@ -78,7 +78,7 @@ svg
       .attr("y", marginBottom - 4)
       .attr("fill", "currentColor")
       .attr("text-anchor", "end")
-      .text("Unemployment rate (%) →")
+      .text("h-index →")
   );
 
 // Add the y-axis and label, and remove the domain line.
@@ -94,7 +94,7 @@ svg
       .attr("y", 10)
       .attr("fill", "currentColor")
       .attr("text-anchor", "start")
-      .text("↑ Frequency (no. of counties)")
+      .text("↑ Frequency")
   );
 
 container.append(svg.node());
