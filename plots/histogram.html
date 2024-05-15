@@ -3,21 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cites by h-Index</title>
+    <title>Histogram</title>
     <style>
       * {
         margin: 0;
         padding: 0;
         border: 0;
-        font-family: sans-serif;
       }
     </style>
   </head>
   <body>
-    <h1>Cites by h-index</h1>
-    <ul>
-      <li><a href="plots/semicircles.html">Semicircles</a></li>
-      <li><a href="plots/histogram.html">Histogram</a></li>
-    </ul>
+    <div id="plot"></div>
+
+    <script src="hindices.js"></script>
+    <script src="lib/d3.v7.js"></script>
+    <script src="histogram.js"></script>
   </body>
 </html>
