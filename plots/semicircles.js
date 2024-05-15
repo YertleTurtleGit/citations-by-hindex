@@ -33,76 +33,93 @@ controls.enableRotate = false;
 
 const vertexShaderSource = `#version 300 es
 in vec3 position;
-in int selfHindex;
-in int citedByHindex;
+in vec2 uv;
+in uint selfHindex;
+in uint citedByHindex;
 
-flat out int vSelfHindex;
-flat out int vCitedByHindex;
+out vec2 vUv;
+out float arcDiameter;
+flat out int upsideDown;
+
+uniform uint highestHindex;
+uniform uint lowestHindex;
+uniform float axisFontScale;
+
+float hindexToClipSpace(uint hindex) {
+  return float(hindex - lowestHindex) / float(highestHindex - lowestHindex);
+}
 
 void main() {
-  gl_Position = vec4(position * 2.0, 1.0);
-  vSelfHindex = selfHindex;
-  vCitedByHindex = citedByHindex;
+  float selfHindexClipSpace = hindexToClipSpace(selfHindex);
+  float citedByHindexClipSpace = hindexToClipSpace(citedByHindex);
+
+  arcDiameter = abs(selfHindexClipSpace - citedByHindexClipSpace);
+  float arcVerticalScale = arcDiameter * 2.0;
+
+  vec2 arcPosition;
+  if(selfHindex < citedByHindex) {
+    arcPosition = vec2(
+      selfHindexClipSpace,
+      (position.y+0.5) * arcVerticalScale + axisFontScale / 100.0
+    );
+    upsideDown = 0;
+  } else {
+    arcPosition = vec2(
+      citedByHindexClipSpace,
+      (position.y-0.5) * arcVerticalScale - axisFontScale / 100.0
+    );
+    upsideDown = 1;
+  }
+
+  gl_Position = vec4(vec3(
+    ((position.x + 0.5) * arcDiameter + arcPosition.x) * 2.0 - 1.0,
+    arcPosition.y,
+    position.z
+  ), 1.0);
+
+  vUv = uv;
 }
 `;
 const fragmentShaderSource = `#version 300 es
 precision highp float;
 
-flat in int vSelfHindex;
-flat in int vCitedByHindex;
+in vec2 vUv;
+in float arcDiameter;
+flat in int upsideDown;
 
 out vec4 fragmentColor;
 
-uniform int highestHindex;
-uniform int lowestHindex;
 uniform float lineThickness;
 uniform float lineAlpha;
 uniform float lineSmoothness;
 uniform float axisFontScale;
-uniform vec2 viewport;
 
-float hindexToClipSpace(int hindex) {
-  return float(hindex - lowestHindex) / float(highestHindex - lowestHindex);
-}
 
 void main() {
-  if (vSelfHindex == vCitedByHindex) discard;
+  vec2 arcCenter;
+  vec3 arcColor;
 
-  vec2 uv = gl_FragCoord.xy / viewport;
-  vec3 color;
-  float centerShift;
-  if(vSelfHindex < vCitedByHindex) {
-    centerShift = axisFontScale / 200.0;
-    if (uv.y < 0.5 + centerShift) discard;
-    color = vec3(0.0, 0.0, 1.0);
+  if(upsideDown == 1) {
+    arcColor = vec3(1.0, 0.0, 0.0);
+    arcCenter = vec2(0.5, 1.0);
   } else {
-    centerShift = -axisFontScale / 200.0;
-    if (uv.y > 0.5 + centerShift) discard;
-    color = vec3(1.0, 0.0, 0.0);
+    arcColor = vec3(0.0, 0.0, 1.0);
+    arcCenter = vec2(0.5, 0.0);
   }
 
-  float selfHindexClipSpace = hindexToClipSpace(vSelfHindex);
-  float citedByHindexClipSpace = hindexToClipSpace(vCitedByHindex);
+  float arcDistance = distance(arcCenter, vUv);
 
-  vec2 arcCenter = vec2(
-    (selfHindexClipSpace + citedByHindexClipSpace) / 2.0,
-    0.5 + centerShift
-  );
-
-  float arcRadius = abs(selfHindexClipSpace - citedByHindexClipSpace) / 2.0;
-  float arcDistance = distance(arcCenter, uv);
-  
   float arcAlpha = (1.0 - smoothstep(
-    arcRadius - lineSmoothness,
-    arcRadius + lineSmoothness,
-    arcDistance - lineThickness / 2.0
+    0.5 - lineSmoothness,
+    0.5 + lineSmoothness,
+    arcDistance - (lineThickness / 2.0) / arcDiameter
   )) * smoothstep(
-    arcRadius - lineSmoothness,
-    arcRadius + lineSmoothness,
-    arcDistance + lineThickness / 2.0
+    0.5 - lineSmoothness,
+    0.5 + lineSmoothness,
+    arcDistance + (lineThickness / 2.0) / arcDiameter
   );
 
-  fragmentColor = vec4(color, arcAlpha * lineAlpha);
+  fragmentColor = vec4(arcColor, arcAlpha * lineAlpha);
 }
 `;
 
@@ -113,11 +130,11 @@ instancedGeometry.instanceCount = selfHindexList.length;
 
 instancedGeometry.setAttribute(
   "selfHindex",
-  new THREE.InstancedBufferAttribute(new Int32Array(selfHindexList), 1)
+  new THREE.InstancedBufferAttribute(new Uint32Array(selfHindexList), 1)
 );
 instancedGeometry.setAttribute(
   "citedByHindex",
-  new THREE.InstancedBufferAttribute(new Int32Array(citedByHindexList), 1)
+  new THREE.InstancedBufferAttribute(new Uint32Array(citedByHindexList), 1)
 );
 
 let axisDistance = 250;
@@ -125,10 +142,11 @@ let axisFontScale = 2;
 const material = new THREE.RawShaderMaterial({
   uniforms: {
     viewport: { type: "2f", value: new THREE.Vector2(), controls: false },
-    lowestHindex: { type: "i", value: lowestHindex, controls: false },
-    highestHindex: { type: "i", value: highestHindex, controls: false },
+    lowestHindex: { type: "ui", value: lowestHindex, controls: false },
+    highestHindex: { type: "ui", value: highestHindex, controls: false },
+    aspect: { type: "f", value: 1, controls: false },
     axisFontScale: { type: "f", value: axisFontScale },
-    lineThickness: { type: "f", value: 0.001 },
+    lineThickness: { type: "f", value: 0.0015 },
     lineAlpha: { type: "f", value: 0.1 },
     lineSmoothness: { type: "f", value: 0.001 },
   },
@@ -174,6 +192,8 @@ function adaptToWindowSize() {
     canvas.width,
     canvas.height
   );
+  material.uniforms.aspect.value = canvas.width / canvas.height;
+  console.log(material.uniforms.aspect.value);
   adaptAxisLabels();
   requestAnimationFrame(render);
 }
