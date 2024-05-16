@@ -44,12 +44,16 @@ flat out int upsideDown;
 uniform uint highestHindex;
 uniform uint lowestHindex;
 uniform float axisFontScale;
+uniform uint maxCitationDistance;
+uniform uint minCitationDistance;
 
 float hindexToClipSpace(uint hindex) {
   return float(hindex - lowestHindex) / float(highestHindex - lowestHindex);
 }
 
 void main() {
+  uint citationDistance = uint(abs(float(selfHindex) - float(citedByHindex)));
+  if (citationDistance <= maxCitationDistance && citationDistance >= minCitationDistance) {
   float selfHindexClipSpace = hindexToClipSpace(selfHindex);
   float citedByHindexClipSpace = hindexToClipSpace(citedByHindex);
 
@@ -78,6 +82,7 @@ void main() {
   ), 1.0);
 
   vUv = uv;
+  }
 }
 `;
 const fragmentShaderSource = `#version 300 es
@@ -144,11 +149,26 @@ const material = new THREE.RawShaderMaterial({
     viewport: { type: "2f", value: new THREE.Vector2(), controls: false },
     lowestHindex: { type: "ui", value: lowestHindex, controls: false },
     highestHindex: { type: "ui", value: highestHindex, controls: false },
+    mousePosition: { type: "2f", value: new THREE.Vector2(), controls: false },
     aspect: { type: "f", value: 1, controls: false },
     axisFontScale: { type: "f", value: axisFontScale },
     lineThickness: { type: "f", value: 0.0015 },
     lineAlpha: { type: "f", value: 0.1 },
     lineSmoothness: { type: "f", value: 0.001 },
+    maxCitationDistance: {
+      type: "ui",
+      value: highestHindex,
+      min: 0,
+      max: highestHindex,
+      step: 1,
+    },
+    minCitationDistance: {
+      type: "ui",
+      value: 0,
+      min: 0,
+      max: highestHindex,
+      step: 1,
+    },
   },
   vertexShader: vertexShaderSource,
   fragmentShader: fragmentShaderSource,
@@ -193,7 +213,7 @@ function adaptToWindowSize() {
     canvas.height
   );
   material.uniforms.aspect.value = canvas.width / canvas.height;
-  console.log(material.uniforms.aspect.value);
+
   adaptAxisLabels();
   requestAnimationFrame(render);
 }
@@ -207,12 +227,16 @@ Object.keys(material.uniforms).forEach((uniformKey) => {
   if (material.uniforms[uniformKey].controls == false) return;
   const value = material.uniforms[uniformKey].value;
 
+  const minControl = material.uniforms[uniformKey].min;
+  const maxControl = material.uniforms[uniformKey].max;
+  const stepControl = material.uniforms[uniformKey].step;
+
   const inputElement = document.createElement("input");
   inputElement.id = uniformKey;
   inputElement.type = "range";
-  inputElement.min = value * 0.1;
-  inputElement.max = value * 1.9;
-  inputElement.step = value * 0.05;
+  inputElement.min = minControl != undefined ? minControl : value * 0.1;
+  inputElement.max = maxControl != undefined ? maxControl : value * 1.9;
+  inputElement.step = stepControl != undefined ? stepControl : value * 0.05;
   inputElement.value = value;
 
   const inputLabel = document.createElement("label");
