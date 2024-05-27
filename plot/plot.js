@@ -99,7 +99,6 @@ uniform float lineAlpha;
 uniform float lineSmoothness;
 uniform float axisFontScale;
 
-
 void main() {
   vec2 arcCenter;
   vec3 arcColor;
@@ -200,11 +199,19 @@ function adaptAxisLabels() {
 }
 
 function render() {
-  console.log("render");
   renderer.render(scene, camera);
 }
 
+let scrollHeight;
 function adaptToWindowSize() {
+  scrollHeight = Math.max(
+    document.body.scrollHeight,
+    document.body.offsetHeight,
+    document.documentElement.clientHeight,
+    document.documentElement.scrollHeight,
+    document.documentElement.offsetHeight
+  );
+
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   renderer.setSize(canvas.width, canvas.height);
@@ -254,7 +261,6 @@ Object.keys(material.uniforms).forEach((uniformKey) => {
     event.target.value = newValue;
     material.uniforms[uniformKey].value = newValue;
     inputLabel.innerText = uniformKey + ": " + newValue;
-    requestAnimationFrame(render);
 
     if (uniformKey == "axisDistance") {
       axisDistance = newValue;
@@ -264,5 +270,53 @@ Object.keys(material.uniforms).forEach((uniformKey) => {
       axisFontScale = newValue;
       adaptAxisLabels();
     }
+    requestAnimationFrame(render);
   });
 });
+
+const stages = [
+  {
+    callback: (scroll) => {
+      const kernelSize = Math.min(1 / scroll, 10);
+      canvas.style.filter = "blur(" + kernelSize + "px) saturate(0%)";
+    },
+  },
+  { callback: () => {} },
+  {
+    callback: (scroll) => {
+      const saturation = Math.min(100, scroll * 200);
+      canvas.style.filter = "saturate(" + saturation + "%)";
+    },
+  },
+  {
+    callback: (scroll) => {
+      const factor = Math.min(1, scroll * 2);
+      axis.style.opacity = factor;
+      axisFontScale = factor * 2;
+      material.uniforms.axisFontScale.value = axisFontScale;
+      adaptAxisLabels();
+      requestAnimationFrame(render);
+    },
+  },
+];
+
+function updateScrollEffect() {
+  const relativeScrollY = window.scrollY / (scrollHeight - window.innerHeight);
+  const currentStageIndex = Math.min(
+    Math.floor(relativeScrollY * stages.length),
+    stages.length - 1
+  );
+  const relativeStageScrollY =
+    (relativeScrollY - currentStageIndex / stages.length) * stages.length;
+
+  stages.forEach((_, stageIndex) => {
+    let stageScroll = relativeStageScrollY;
+    if (stageIndex < currentStageIndex) stageScroll = 100;
+    if (stageIndex > currentStageIndex) stageScroll = 0;
+    stages[stageIndex].callback(stageScroll);
+  });
+  stages[currentStageIndex].callback(relativeStageScrollY);
+  
+}
+window.addEventListener("scroll", updateScrollEffect);
+updateScrollEffect();

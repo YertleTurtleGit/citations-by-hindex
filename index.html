@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -13,24 +13,19 @@
       }
 
       #plot {
-        position: absolute;
-      }
-
-      #plot-progress {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        position: fixed;
       }
 
       #control-panel {
+        position: fixed;
         display: flex;
-        position: absolute;
         left: 0;
         gap: 0.5rem;
         flex-direction: column;
         padding: 0.5rem;
         width: 90%;
+
+        display: none;
       }
 
       #control-panel {
@@ -38,19 +33,46 @@
       }
 
       #axis {
+        position: fixed;
         height: 100%;
         width: 100%;
         font-size: 1rem;
-        position: absolute;
       }
 
       #axis span {
-        position: absolute;
+        position: fixed;
         display: flex;
         align-items: center;
         height: 100%;
         color: RGB(128, 128, 128);
         border-left: 0.1rem RGBA(0, 0, 0, 0.25) solid;
+      }
+
+      #scroll-content {
+        position: absolute;
+        width: 100%;
+        height: auto;
+      }
+
+      .scroll-element {
+        display: flex;
+        flex-direction: column;
+        width: auto;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .scroll-element p {
+        padding: 5px;
+        max-width: 200px;
+        background-color: white;
+      }
+
+      .scroll-element * {
+        border-radius: 3px;
+        padding: 2px;
+        font-family: serif;
       }
     </style>
   </head>
@@ -58,6 +80,43 @@
     <canvas id="plot"></canvas>
     <div id="axis"></div>
     <div id="control-panel"></div>
+
+    <div id="scroll-content">
+      <div class="scroll-element">
+        <h1><i>Cites by h-index</i></h1>
+      </div>
+      <div class="scroll-element">
+        <p>
+          This plot shows how scientist cite each other by <i>reputation</i>.
+        </p>
+      </div>
+      <div class="scroll-element">
+        <p>A single arc stands for a citation.</p>
+        <p>
+          <span style="background-color: blue; color: white">Blue</span> arcs
+          mark scientists with higher <i>reputation</i> that cite scientists
+          with a lower <i>reputation</i> and
+          <span style="background-color: red; color: white">red</span> arcs mark
+          the opposite.
+        </p>
+      </div>
+      <div class="scroll-element">
+        <p>
+          <i>Reputation</i> is here defined by the
+          <a
+            href="https://en.wikipedia.org/wiki/H-index"
+            target="_blank"
+            rel="noopener noreferrer"
+            >h-index</a
+          >
+          of a scientist.
+        </p>
+        <p>
+          This metric is far from perfect, but has significance alone from being
+          used frequently on many science databases.
+        </p>
+      </div>
+    </div>
 
     <script src="./plot/libraries/three.js"></script>
     <script src="./plot/libraries/three-orbit-controls.js"></script>
