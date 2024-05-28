@@ -63,10 +63,16 @@
         justify-content: center;
       }
 
-      .scroll-element p {
+      .scroll-element p,
+      .scroll-element h1 {
         padding: 5px;
         max-width: 200px;
         background-color: white;
+      }
+
+      .scroll-element h1 {
+        padding: 10px;
+        max-width: 400px;
       }
 
       .scroll-element * {
@@ -83,7 +89,12 @@
 
     <div id="scroll-content">
       <div class="scroll-element">
-        <h1><i>Cites by h-index</i></h1>
+        <h1>
+          <i
+            >Do Scientists Directly or Indirectly Cite other Scientists by
+            h-Index?</i
+          >
+        </h1>
       </div>
       <div class="scroll-element">
         <p>
@@ -107,13 +118,32 @@
             href="https://en.wikipedia.org/wiki/H-index"
             target="_blank"
             rel="noopener noreferrer"
-            >h-index</a
+            ><i>h-index</i></a
           >
           of a scientist.
         </p>
         <p>
           This metric is far from perfect, but has significance alone from being
           used frequently on many science databases.
+        </p>
+      </div>
+      <div class="scroll-element">
+        <p>
+          If we only show the citations with a high difference between
+          <i>h-indices</i>, we see more
+          <span style="background-color: red; color: white">red</span> than
+          <span style="background-color: blue; color: white">blue</span> lines.
+        </p>
+        <p>
+          That means that scientists with a low <i>h-index</i> cite scientist
+          with a high <i>h-index</i> more often than the other way around.
+        </p>
+      </div>
+      <div class="scroll-element">
+        <p>
+          If we visualize the opposite: citations with a low difference between
+          <i>h-indices</i>, we see that most of these cites mostly happen in the
+          lower <i>h-index</i> spectrum.
         </p>
       </div>
     </div>

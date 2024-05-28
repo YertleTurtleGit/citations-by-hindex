@@ -277,7 +277,7 @@ Object.keys(material.uniforms).forEach((uniformKey) => {
 const stages = [
   {
     callback: (scroll) => {
-      const kernelSize = Math.min(1 / scroll, 10);
+      const kernelSize = Math.min(1 / scroll, 3);
       canvas.style.filter = "blur(" + kernelSize + "px) saturate(0%)";
     },
   },
@@ -295,6 +295,24 @@ const stages = [
       axisFontScale = factor * 2;
       material.uniforms.axisFontScale.value = axisFontScale;
       adaptAxisLabels();
+      requestAnimationFrame(render);
+    },
+  },
+  {
+    callback: (scroll) => {
+      let minCitationDistance = scroll * 125;
+
+      material.uniforms.minCitationDistance.value = minCitationDistance;
+      requestAnimationFrame(render);
+    },
+  },
+  {
+    callback: (scroll) => {
+      let minCitationDistance = 125 - scroll * 125;
+      if (scroll === 0) minCitationDistance = 0;
+      material.uniforms.minCitationDistance.value = minCitationDistance;
+      material.uniforms.maxCitationDistance.value =
+        highestHindex - scroll * 195;
       requestAnimationFrame(render);
     },
   },
@@ -316,7 +334,11 @@ function updateScrollEffect() {
     stages[stageIndex].callback(stageScroll);
   });
   stages[currentStageIndex].callback(relativeStageScrollY);
-  
 }
 window.addEventListener("scroll", updateScrollEffect);
 updateScrollEffect();
+
+console.assert(
+  stages.length == document.getElementById("scroll-content").children.length,
+  "Stage definition length does not match HTML stage length."
+);
