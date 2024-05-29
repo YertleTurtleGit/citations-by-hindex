@@ -7,6 +7,7 @@ const progress = /** @type {HTMLProgressElement} */ (
   document.getElementById("plot-progress")
 );
 const axis = /** @type {HTMLDivElement} */ (document.getElementById("axis"));
+const controlPanel = document.getElementById("control-panel");
 
 const allHindices = hindices.flatMap((obj) => [...obj.self, ...obj.citedBy]);
 const highestHindex = Math.max(...allHindices);
@@ -228,8 +229,6 @@ adaptToWindowSize();
 window.addEventListener("resize", adaptToWindowSize);
 controls.addEventListener("change", render);
 
-const controlPanel = document.getElementById("control-panel");
-
 Object.keys(material.uniforms).forEach((uniformKey) => {
   if (material.uniforms[uniformKey].controls == false) return;
   const value = material.uniforms[uniformKey].value;
@@ -301,7 +300,6 @@ const stages = [
   {
     callback: (scroll) => {
       let minCitationDistance = scroll * 125;
-
       material.uniforms.minCitationDistance.value = minCitationDistance;
       requestAnimationFrame(render);
     },
@@ -314,6 +312,21 @@ const stages = [
       material.uniforms.maxCitationDistance.value =
         highestHindex - scroll * 195;
       requestAnimationFrame(render);
+    },
+  },
+  {
+    callback: (scroll) => {
+      let maxCitationDistance = scroll * highestHindex;
+      if (scroll === 0) maxCitationDistance = highestHindex;
+      material.uniforms.maxCitationDistance.value = maxCitationDistance;
+      requestAnimationFrame(render);
+    },
+  },
+  {
+    callback: (scroll) => {
+      controlPanel.style.display = "flex";
+      if (scroll === 0) controlPanel.style.display = "none";
+      controlPanel.style.opacity = scroll;
     },
   },
 ];
@@ -329,7 +342,7 @@ function updateScrollEffect() {
 
   stages.forEach((_, stageIndex) => {
     let stageScroll = relativeStageScrollY;
-    if (stageIndex < currentStageIndex) stageScroll = 100;
+    if (stageIndex < currentStageIndex) stageScroll = 1;
     if (stageIndex > currentStageIndex) stageScroll = 0;
     stages[stageIndex].callback(stageScroll);
   });

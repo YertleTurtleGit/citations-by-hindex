@@ -19,13 +19,12 @@
       #control-panel {
         position: fixed;
         display: flex;
-        left: 0;
+        bottom: 0;
+        right: 0;
         gap: 0.5rem;
         flex-direction: column;
         padding: 0.5rem;
         width: 90%;
-
-        display: none;
       }
 
       #control-panel {
@@ -72,7 +71,7 @@
 
       .scroll-element h1 {
         padding: 10px;
-        max-width: 400px;
+        max-width: 425px;
       }
 
       .scroll-element * {
@@ -85,14 +84,13 @@
   <body>
     <canvas id="plot"></canvas>
     <div id="axis"></div>
-    <div id="control-panel"></div>
 
     <div id="scroll-content">
       <div class="scroll-element">
         <h1>
           <i
             >Do Scientists Directly or Indirectly Cite other Scientists by
-            h-Index?</i
+            Reputation?</i
           >
         </h1>
       </div>
@@ -146,7 +144,13 @@
           lower <i>h-index</i> spectrum.
         </p>
       </div>
+      <div class="scroll-element">
+        <p>Now, you can make your own picture.</p>
+      </div>
+      <div class="scroll-element"></div>
     </div>
+
+    <div id="control-panel"></div>
 
     <script src="./plot/libraries/three.js"></script>
     <script src="./plot/libraries/three-orbit-controls.js"></script>
