@@ -32,7 +32,7 @@ renderer.setClearColor(new THREE.Color("white"));
 const controls = new THREE.OrbitControls(camera, canvas);
 controls.enableRotate = false;
 
-const vertexShaderSource = `#version 300 es
+const vertexShaderSource = /*glsl*/ `#version 300 es
 in vec3 position;
 in vec2 uv;
 in uint selfHindex;
@@ -86,7 +86,7 @@ void main() {
   }
 }
 `;
-const fragmentShaderSource = `#version 300 es
+const fragmentShaderSource = /*glsl*/ `#version 300 es
 precision highp float;
 
 in vec2 vUv;
